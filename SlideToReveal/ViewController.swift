@@ -25,15 +25,35 @@ import UIKit
 class ViewController: UIViewController {
   
   @IBOutlet var slideView: AnimatedMaskLabel!
-  @IBOutlet var time: UILabel!
+  @IBOutlet var timeLabel: UILabel!
+
+	var timer: Timer?
+	let formatter: DateFormatter = {
+		let tmpFormatter = DateFormatter()
+		tmpFormatter.dateFormat = "hh:mm"
+		return tmpFormatter
+	}()
+
   
   override func viewDidLoad() {
     super.viewDidLoad()
-    
+	setTime()
+
+	timer = Timer.scheduledTimer(timeInterval: 60, target: self, selector: #selector(self.setTime), userInfo: nil, repeats: true)
+
+	let swipe = UISwipeGestureRecognizer(target: self,
+										 action: #selector(ViewController.didSlide))
+		swipe.direction = .right
+	slideView.addGestureRecognizer(swipe)
   }
+
+	override func viewWillDisappear(_ animated: Bool) {
+		super.viewWillDisappear(animated)
+		timer?.invalidate()
+	}
   
-  func didSlide() {
-    
+	@objc func didSlide() {
+
     // reveal the meme upon successful slide
     let image = UIImageView(image: UIImage(named: "meme"))
     image.center = view.center
@@ -42,23 +62,37 @@ class ViewController: UIViewController {
     
     UIView.animate(withDuration: 0.33, delay: 0.0,
       animations: {
-        self.time.center.y -= 200.0
+        self.timeLabel.center.y -= 200.0
         self.slideView.center.y += 200.0
         image.center.x -= self.view.bounds.size.width
       },
-      completion: nil
+      completion: { _ in
+		self.slideView.swapGradient()
+	}
     )
     
-    UIView.animate(withDuration: 0.33, delay: 1.0,
+    UIView.animate(withDuration: 0.33, delay: 3.0,
       animations: {
-        self.time.center.y += 200.0
+        self.timeLabel.center.y += 200.0
         self.slideView.center.y -= 200.0
         image.center.x += self.view.bounds.size.width
       },
       completion: {_ in
+
         image.removeFromSuperview()
       }
     )
   }
+	@objc private func setTime() {
+		let curDate = Date()
+
+		timeLabel.text = formatter.string(from: curDate)
+	}
   
 }
+
+
+
+
+
+
